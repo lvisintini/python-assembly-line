@@ -1,20 +1,20 @@
 import logging
 from tqdm import tqdm
 
-from production_line.data_helper import DataHelper
+from assembly_line.data_helper import DataHelper
 
 
-class LineHelper(object):
+logger = logging.getLogger(__name__)
+
+
+class AssemblyLine(object):
+    log = logger
     tasks = []
 
     def __init__(self, data_helper=None, **kwargs):
         self.data_helper = DataHelper(**kwargs) if data_helper is None else data_helper
         if data_helper is not None:
             self.data_helper.__dict__.update(kwargs)
-
-        logger = logging.getLogger(__name__)
-        self.log = logger
-        self.data_helper.log = logger
 
     def run(self):
         for task in tqdm([t for t in self.tasks if hasattr(t, 'setup')], desc='Setups'):
@@ -61,6 +61,3 @@ class LineHelper(object):
                 self.log.error('Teardown for {!r}'.format(task))
                 self.log.exception(e)
                 break
-
-
-

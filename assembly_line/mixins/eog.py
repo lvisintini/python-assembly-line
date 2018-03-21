@@ -5,8 +5,6 @@ from look_at.wmctrl import WmCtrl
 
 
 class ShowImageMixin:
-    image_attr = 'image_file'
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.viewers = []

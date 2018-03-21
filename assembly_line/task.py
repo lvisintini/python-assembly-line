@@ -1,6 +1,10 @@
 import logging
 from types import MethodType
-from production_line.expections import ProductionLineDataHelperNotReturnedError
+from assembly_line.expections import AssemblyLineDataHelperNotReturnedError
+from assembly_line.data_helper import DataHelper
+
+
+logger = logging.getLogger(__name__)
 
 
 def _do_pre_process(this, data_helper):
@@ -8,7 +12,7 @@ def _do_pre_process(this, data_helper):
         res = this.pre_process(data_helper)
 
         if not isinstance(res, DataHelper):
-            raise ProductionLineDataHelperNotReturnedError(
+            raise AssemblyLineDataHelperNotReturnedError(
                 '{!r}.pre_process did not return a DataHelperInstance'.format(this)
             )
 
@@ -22,7 +26,7 @@ def _do_process(this, data_helper):
     res = this.process(data_helper)
 
     if not isinstance(res, DataHelper):
-        raise ProductionLineDataHelperNotReturnedError(
+        raise AssemblyLineDataHelperNotReturnedError(
             '{!r}.process did not return a DataHelperInstance'.format(this)
         )
 
@@ -34,7 +38,7 @@ def _do_post_process(this, data_helper):
         res = this.post_process(data_helper)
 
         if not isinstance(res, DataHelper):
-            raise ProductionLineDataHelperNotReturnedError(
+            raise AssemblyLineDataHelperNotReturnedError(
                 '{!r}.post_process did not return a DataHelperInstance'.format(this)
             )
 
@@ -47,7 +51,7 @@ def _do_setup(this, data_helper):
         res = this.setup(data_helper)
 
         if not isinstance(res, DataHelper):
-            raise ProductionLineDataHelperNotReturnedError(
+            raise AssemblyLineDataHelperNotReturnedError(
                 '{!r}.setup did not return a DataHelperInstance'.format(this)
             )
 
@@ -60,7 +64,7 @@ def _do_teardown(this, data_helper):
         res = this.teardown(data_helper)
 
         if not isinstance(res, DataHelper):
-            raise ProductionLineDataHelperNotReturnedError(
+            raise AssemblyLineDataHelperNotReturnedError(
                 '{!r}.teardown did not return a DataHelperInstance'.format(this)
             )
 
@@ -91,7 +95,7 @@ class ReprMeta(type):
 
 
 class Task(object, metaclass=ReprMeta):
-    log = logging.getLogger(__name__)
+    log = logger
 
     def __init__(self, *args, **kwargs):
         self.do_setup = MethodType(_do_setup, self)

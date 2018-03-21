@@ -6,16 +6,16 @@ with open('./requirements.txt') as f:
     requirements = f.read().splitlines()
 
 config = ConfigParser()
-config.read('./python-production-line.cfg')
+config.read('./python-assembly-line.cfg')
 
 setup(
-    name='python-production-line',
+    name='python-assembly-line',
     version=config['default']['version'],
     install_requires=requirements,
     author='Luis Visintini',
     author_email='lvisintini@gmail.com',
-    packages=['production_line', ],
-    url='https://github.com/lvisintini/python-production-line',
+    packages=['assembly_line', ],
+    url='https://github.com/lvisintini/python-assembly-line',
     license='The MIT License (MIT)',
-    description='A python toolkit to define a production line of task and run "things" through it.',
+    description='A python toolkit to define a assembly line of task and run "things" through it.',
 )
