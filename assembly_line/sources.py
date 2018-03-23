@@ -1,5 +1,7 @@
-import os
 import errno
+import json
+import os
+import re
 import sys
 from collections import OrderedDict
 
@@ -17,36 +19,40 @@ class DataSource:
     def save_data(self, data):
         raise NotImplementedError()
 
-    def append_data(self, entry):
-        raise NotImplementedError()
 
-
-class FileSource:
+class FileSource(DataSource):
     root = None
     path = None
     write_path = None
-    source_key = None
+    source_name = None
+    attr_name = None
 
-    def __init__(self, path=None, root=None, write_path=None, source_key=None):
+    def __init__(self, path=None, root=None, write_path=None, source_name=None, attr_name=None, **kwargs):
         self.root = root or self.root
         self.path = path or self.path
         self.write_path = write_path or self.write_path
-        self.source_key = source_key or self.source_key
+        self.source_name = source_name or self.source_name
+        self.attr_name = attr_name or self.attr_name
+
+        self.is_default_provided = 'default' in kwargs
+        self.default_if_file_not_found = kwargs.pop('default', None)
 
         if not self.write_path:
             self.write_path = self.path
 
-        if not os.path.isfile(self.get_read_path()):
+        if not self.is_default_provided and not os.path.isfile(self.get_read_path()):
             raise AssemblyLineError(f"{self.get_read_path()} is not a file")
 
         if not self.is_pathname_valid(self.get_write_path()) or os.path.isdir(self.get_write_path()):
             raise AssemblyLineError(f"{self.get_write_path()} is not a valid file write path")
 
-        if not self.source_key:
-            self.source_key = '.'.join(os.path.basename(self.path).split('.')[:-1])
+        if not self.source_name:
+            self.source_name = '.'.join(os.path.basename(self.path).split('.')[:-1])
 
-    def create_or_override_source(self):
-        raise NotImplementedError()
+        if not self.attr_name:
+            # Clean up source_name as best as possible to get an valid identifier name
+            self.attr_name = re.sub('[^0-9a-zA-Z_]', '', self.source_name)
+            self.attr_name = re.sub('^[^a-zA-Z_]+', '', self.attr_name)
 
     def get_read_path(self):
         return os.path.abspath(os.path.join(self.root, self.path))
@@ -124,12 +130,28 @@ class FileSource:
             return True
 
 
-class JSONSource(DataSource):
-    def process(self, data_helper):
-        data = OrderedDict()
-        for source_key in self.sources:
-            with open(f'{self.root}{source_key}.{self.extension}', 'r') as file_object:
-                data[source_key] = json.load(file_object, object_pairs_hook=OrderedDict)
-            self.log.info(f'{source_key} data loaded')
-        setattr(data_helper, self.attr, data)
-        return data_helper
+class JSONSource(FileSource):
+    indent = 2
+    ensure_ascii = False
+
+    def __init__(self, **kwargs):
+        self.indent = kwargs.pop('indent', self.indent)
+        self.ensure_ascii = kwargs.pop('ensure_ascii', self.ensure_ascii)
+        super().__init__(**kwargs)
+
+    def fetch_data(self):
+        if not self.is_default_provided and not os.path.isfile(self.get_read_path()):
+            data = self.default_if_file_not_found
+        else:
+            with open(self.get_read_path(), 'r') as file_object:
+                data = json.load(file_object, object_pairs_hook=OrderedDict)
+        return data
+
+    def save_data(self, data):
+        with open(self.get_write_path(), 'w') as file_object:
+            json.dump(
+                data,
+                file_object,
+                indent=self.indent,
+                ensure_ascii=self.ensure_ascii
+            )
