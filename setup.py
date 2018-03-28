@@ -1,3 +1,4 @@
+import os
 from setuptools import setup
 from configparser import ConfigParser
 
@@ -6,11 +7,11 @@ with open('./requirements.txt') as f:
     requirements = f.read().splitlines()
 
 config = ConfigParser()
-config.read('./python-assembly-line.cfg')
+config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), './python-assembly-line.cfg')))
 
 setup(
     name='python-assembly-line',
-    version=config['default']['version'],
+    version=config['DEFAULT']['version'],
     install_requires=requirements,
     author='Luis Visintini',
     author_email='lvisintini@gmail.com',
